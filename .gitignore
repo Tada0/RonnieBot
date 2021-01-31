@@ -129,6 +129,5 @@ dmypy.json
 .pyre/
 
 # project specific
-*.mp3
 db.json
 .idea
