@@ -1,6 +1,7 @@
 import tinydb
 import asyncio
 from discord.ext.commands import Bot
+from random import choice
 import discord
 import bot_help
 import settings
@@ -58,18 +59,28 @@ async def set_channel_interval(context):
 
 
 @client.command(name='ronnie', pass_context=True)
-async def help(context):
+async def ronnie_help(context):
     await context.send(bot_help.help_text)
 
 
-@client.command(name='ronnie_sound', pass_context=True)
-async def sound(context):
-    pass
+@client.command(name='ronnie_sound', aliases=['lightweight', 'ooo'], pass_context=True)
+async def sound(context, loops=1):
+    all_sounds = [file for file in os.listdir(os.getenv('SOUNDS_PATH'))]
+    voice_channel = context.author.voice.channel
+    voice_channel_connection = await voice_channel.connect()
+    if context.message.content[1:] in ('ronnie_sound', 'ronnie_vibe_check'):
+        for _ in range(loops):
+            voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{choice(all_sounds)}'))
+            while voice_channel_connection.is_playing():
+                time.sleep(.1)
+    else:
+        pass
+    await voice_channel_connection.disconnect()
 
 
 @client.command(name='ronnie_vibe_check', pass_context=True)
 async def vibe_check(context):
-    pass
+    await sound(context, loops=15)
 
 
 async def playback_queue():
@@ -93,9 +104,10 @@ async def on_ready():
 
 
 async def play(voice_channel):
+    all_sounds = [file for file in os.listdir(os.getenv('SOUNDS_PATH'))]
     voice_channel = voice_channel
     voice_channel_connection = await voice_channel.connect()
-    voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/a.mp3'))
+    voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{choice(all_sounds)}'))
     while voice_channel_connection.is_playing():
         time.sleep(.1)
     await voice_channel_connection.disconnect()
