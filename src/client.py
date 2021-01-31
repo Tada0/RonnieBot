@@ -2,14 +2,15 @@ import tinydb
 import asyncio
 from discord.ext.commands import Bot
 import discord
+import bot_help
 import settings
 import os
 import time
 
-client = Bot(command_prefix=("?", "#"))
+client = Bot(command_prefix=("?", "#", "!"))
 
 
-@client.command(name='add_ronnie', pass_context=True)
+@client.command(name='ronnie_add', pass_context=True)
 async def add_voice_channel(context):
     try:
         voice_channel = context.author.voice.channel
@@ -24,7 +25,7 @@ async def add_voice_channel(context):
         print('User not in any Voice Channel')
 
 
-@client.command(name='remove_ronnie', pass_context=True)
+@client.command(name='ronnie_remove', pass_context=True)
 async def remove_voice_channel(context):
     try:
         voice_channel = context.author.voice.channel
@@ -56,24 +57,9 @@ async def set_channel_interval(context):
         await context.send(error)
 
 
-@client.command(
-    name='ronnie',
-    pass_context=True
-)
-async def help(ctx):
-    print(ctx)
-    voice_channel = ctx.author.voice.channel
-    channel = None
-    if voice_channel is not None:
-        channel = voice_channel.name
-        vc = await voice_channel.connect()
-        vc.play(discord.FFmpegPCMAudio('a.mp3'))
-        while vc.is_playing():
-            time.sleep(.1)
-        await vc.disconnect()
-    else:
-        await ctx.send(str(ctx.author.name) + "is not in a channel.")
-    await ctx.message.delete()
+@client.command(name='ronnie', pass_context=True)
+async def help(context):
+    await context.send(bot_help.help_text)
 
 
 @client.command(name='ronnie_sound', pass_context=True)
