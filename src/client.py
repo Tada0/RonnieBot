@@ -11,24 +11,49 @@ client = Bot(command_prefix=("?", "#"))
 
 @client.command(name='add_ronnie', pass_context=True)
 async def add_voice_channel(context):
-    voice_channel = context.author.voice.channel
-    with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
-        if voice_channel.id not in list(map(lambda entry: entry['channel'], db.table('channels').all())):
-            db.table('channels').insert({'channel': voice_channel.id})
-            await context.send(f'Voice Channel "{voice_channel}" Added')
-        else:
-            await context.send(f'Voice Channel "{voice_channel}" Already Added')
+    try:
+        voice_channel = context.author.voice.channel
+        with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
+            if voice_channel.id not in list(map(lambda entry: entry['channel'], db.table('channels').all())):
+                db.table('channels').insert(
+                    {'channel': voice_channel.id, 'interval': 300, 'timestamp': int(time.time())})
+                await context.send(f'Voice Channel "{voice_channel}" Added')
+            else:
+                await context.send(f'Voice Channel "{voice_channel}" Already Added')
+    except AttributeError:
+        print('User not in any Voice Channel')
 
 
 @client.command(name='remove_ronnie', pass_context=True)
 async def remove_voice_channel(context):
-    voice_channel = context.author.voice.channel
-    with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
-        if voice_channel.id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
-            db.table('channels').remove(tinydb.Query().channel == voice_channel.id)
-            await context.send(f'Voice Channel "{voice_channel}" Removed')
-        else:
-            await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
+    try:
+        voice_channel = context.author.voice.channel
+        with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
+            if voice_channel.id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
+                db.table('channels').remove(tinydb.Query().channel == voice_channel.id)
+                await context.send(f'Voice Channel "{voice_channel}" Removed')
+            else:
+                await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
+    except AttributeError:
+        print('User not in any Voice Channel')
+
+
+@client.command(name='ronnie_interval', pass_context=True)
+async def set_channel_interval(context):
+    try:
+        voice_channel = context.author.voice.channel
+        with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
+            if voice_channel.id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
+                if len(message := context.message.content.split()) != 2 or not message[1].isnumeric():
+                    raise ValueError('Wrong command format, type "?ronnie" for help')
+                db.table('channels').update({'interval': int(message[1])}, tinydb.Query().channel == voice_channel.id)
+                await context.send(f'Ronnie Interval for Channel "{voice_channel}" set to {message[1]} seconds.')
+            else:
+                await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
+    except AttributeError:
+        print('User not in any Voice Channel')
+    except ValueError as error:
+        await context.send(error)
 
 
 @client.command(
@@ -57,7 +82,10 @@ async def playback_queue():
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
             for voice_channel_id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
                 if (voice_channel := client.get_channel(voice_channel_id)).voice_states:
-                    await play(voice_channel)
+                    channel_data = db.table('channels').search(tinydb.Query().channel == voice_channel_id)[0]
+                    if not int(channel_data['timestamp']) + int(channel_data['interval']) > int(time.time()):
+                        db.table('channels').update({'timestamp': int(time.time())}, tinydb.Query().channel == voice_channel_id)
+                        await play(voice_channel)
         await asyncio.sleep(5)
 
 
