@@ -1,7 +1,7 @@
 import tinydb
 import asyncio
 from discord.ext.commands import Bot
-from random import choice
+from random import choice, randint
 import discord
 import bot_help
 import settings
@@ -80,7 +80,7 @@ async def sound(context, loops=1):
 
 @client.command(name='ronnie_vibe_check', pass_context=True)
 async def vibe_check(context):
-    await sound(context, loops=15)
+    await sound(context, loops=randint(5, 10))
 
 
 async def playback_queue():
