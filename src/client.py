@@ -60,7 +60,7 @@ async def set_channel_interval(context):
     name='ronnie',
     pass_context=True
 )
-async def ronnie(ctx):
+async def help(ctx):
     print(ctx)
     voice_channel = ctx.author.voice.channel
     channel = None
@@ -76,6 +76,11 @@ async def ronnie(ctx):
     await ctx.message.delete()
 
 
+@client.command(name='ronnie_sound', pass_context=True)
+async def sound(context):
+    pass
+
+
 async def playback_queue():
     await client.wait_until_ready()
     while not client.is_closed():
@@ -84,7 +89,8 @@ async def playback_queue():
                 if (voice_channel := client.get_channel(voice_channel_id)).voice_states:
                     channel_data = db.table('channels').search(tinydb.Query().channel == voice_channel_id)[0]
                     if not int(channel_data['timestamp']) + int(channel_data['interval']) > int(time.time()):
-                        db.table('channels').update({'timestamp': int(time.time())}, tinydb.Query().channel == voice_channel_id)
+                        db.table('channels').update({'timestamp': int(time.time())},
+                                                    tinydb.Query().channel == voice_channel_id)
                         await play(voice_channel)
         await asyncio.sleep(5)
 
