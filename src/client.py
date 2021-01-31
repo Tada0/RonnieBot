@@ -106,11 +106,14 @@ async def on_ready():
 async def play(voice_channel):
     all_sounds = [file for file in os.listdir(os.getenv('SOUNDS_PATH'))]
     voice_channel = voice_channel
-    voice_channel_connection = await voice_channel.connect()
-    voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{choice(all_sounds)}'))
-    while voice_channel_connection.is_playing():
-        time.sleep(.1)
-    await voice_channel_connection.disconnect()
+    try:
+        voice_channel_connection = await voice_channel.connect()
+        voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{choice(all_sounds)}'))
+        while voice_channel_connection.is_playing():
+            time.sleep(.1)
+        await voice_channel_connection.disconnect()
+    except discord.errors.ClientException:
+        print('RonnieBot already Connected')
 
 
 if __name__ == '__main__':
