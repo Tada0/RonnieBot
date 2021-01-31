@@ -81,6 +81,11 @@ async def sound(context):
     pass
 
 
+@client.command(name='ronnie_vibe_check', pass_context=True)
+async def vibe_check(context):
+    pass
+
+
 async def playback_queue():
     await client.wait_until_ready()
     while not client.is_closed():
