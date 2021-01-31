@@ -12,7 +12,7 @@ client = Bot(command_prefix=("?", "#"))
 @client.command(name='add_ronnie', pass_context=True)
 async def add_voice_channel(context):
     voice_channel = context.author.voice.channel
-    with tinydb.TinyDB('../Resources/DB/db.json') as db:
+    with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
         if voice_channel.id not in list(map(lambda entry: entry['channel'], db.table('channels').all())):
             db.table('channels').insert({'channel': voice_channel.id})
             await context.send(f'Voice Channel "{voice_channel}" Added')
@@ -23,7 +23,7 @@ async def add_voice_channel(context):
 @client.command(name='remove_ronnie', pass_context=True)
 async def remove_voice_channel(context):
     voice_channel = context.author.voice.channel
-    with tinydb.TinyDB('../Resources/DB/db.json') as db:
+    with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
         if voice_channel.id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
             db.table('channels').remove(tinydb.Query().channel == voice_channel.id)
             await context.send(f'Voice Channel "{voice_channel}" Removed')
@@ -54,7 +54,7 @@ async def ronnie(ctx):
 async def playback_queue():
     await client.wait_until_ready()
     while not client.is_closed():
-        with tinydb.TinyDB('../Resources/DB/db.json') as db:
+        with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
             for voice_channel_id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
                 if (voice_channel := client.get_channel(voice_channel_id)).voice_states:
                     await play(voice_channel)
@@ -70,7 +70,7 @@ async def on_ready():
 async def play(voice_channel):
     voice_channel = voice_channel
     voice_channel_connection = await voice_channel.connect()
-    voice_channel_connection.play(discord.FFmpegPCMAudio('../Resources/Sounds/a.mp3'))
+    voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/a.mp3'))
     while voice_channel_connection.is_playing():
         time.sleep(.1)
     await voice_channel_connection.disconnect()
