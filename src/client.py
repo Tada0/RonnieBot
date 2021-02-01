@@ -1,12 +1,12 @@
-import tinydb
 import asyncio
-from discord.ext.commands import Bot
-from random import choice, randint
-import discord
-import bot_help
-import settings
 import os
 import time
+from random import choice, randint
+import bot_help
+import discord
+import settings
+import tinydb
+from discord.ext.commands import Bot
 
 client = Bot(command_prefix=("?", "#", "!"))
 
@@ -78,6 +78,14 @@ async def sound(context, loops=1):
     await voice_channel_connection.disconnect()
 
 
+@client.event
+async def on_guild_join(guild):
+    for channel in guild.text_channels:
+        if channel.permissions_for(guild.me).send_messages:
+            await channel.send(bot_help.help_text)
+        break
+
+
 @client.command(name='ronnie_vibe_check', pass_context=True)
 async def vibe_check(context):
     await sound(context, loops=randint(5, 10))
@@ -88,12 +96,15 @@ async def playback_queue():
     while not client.is_closed():
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
             for voice_channel_id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
-                if (voice_channel := client.get_channel(voice_channel_id)).voice_states:
-                    channel_data = db.table('channels').search(tinydb.Query().channel == voice_channel_id)[0]
-                    if not int(channel_data['timestamp']) + int(channel_data['interval']) > int(time.time()):
-                        db.table('channels').update({'timestamp': int(time.time())},
-                                                    tinydb.Query().channel == voice_channel_id)
-                        await play(voice_channel)
+                try:
+                    if (voice_channel := client.get_channel(voice_channel_id)).voice_states:
+                        channel_data = db.table('channels').search(tinydb.Query().channel == voice_channel_id)[0]
+                        if not int(channel_data['timestamp']) + int(channel_data['interval']) > int(time.time()):
+                            db.table('channels').update({'timestamp': int(time.time())},
+                                                        tinydb.Query().channel == voice_channel_id)
+                            await play(voice_channel)
+                except AttributeError:
+                    db.table('channels').remove(tinydb.Query().channel == voice_channel_id)
         await asyncio.sleep(5)
 
 
