@@ -19,7 +19,7 @@ pip install -r -requirements.txt
 
 Make sure to also install [FFMPEG](https://ffmpeg.org/download.html) 
 
-After installation finishes you can use `python3 client.py` to start the bot.
+After installation finishes you can use `cd src; python3 client.py` to start the bot.
 
 ## ⚙ Configuration
 
