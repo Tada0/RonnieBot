@@ -118,7 +118,7 @@ async def ronnie_help(context):
     await context.send(bot_help.help_text)
 
 
-@client.command(name='ronnie_sound', aliases=['lightweight', 'ooo'], pass_context=True)
+@client.command(name='ronnie_sound', aliases=['lightweight', 'yeahbuddy', 'yeahbaby', 'chant'], pass_context=True)
 async def sound(context, loops=1):
     all_sounds = [file for file in os.listdir(os.getenv('SOUNDS_PATH'))]
     voice_channel = context.author.voice.channel
@@ -129,7 +129,12 @@ async def sound(context, loops=1):
             while voice_channel_connection.is_playing():
                 time.sleep(.1)
     else:
-        pass
+        song = choice({
+            k: [f for f in os.listdir(os.getenv('SOUNDS_PATH')) if f.startswith(k)] for k in context.command.aliases
+        }[context.message.content[1:]])
+        voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{song}'))
+        while voice_channel_connection.is_playing():
+            time.sleep(.1)
     await voice_channel_connection.disconnect()
 
 

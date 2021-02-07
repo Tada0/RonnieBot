@@ -15,7 +15,7 @@ Ronnie reacts to '!', '?' and '#' command prefixes, in order to be compatible wi
 - !ronnie_vibe_check - Vibe Check```
 **Additional Commands**
 ```- !lightweight
-- !yeah
-- !ooo
-- !aight``` 
+- !yeahbuddy
+- !yeahbaby
+- !chant``` 
 '''
