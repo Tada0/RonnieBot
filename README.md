@@ -31,13 +31,17 @@ Fill the .env file with information
 TOKEN=""
 DB_PATH=""
 SOUNDS_PATH=""
+DEFAULT_INTERVAL=""
+DEFAULT_QUOTE_TIME=""
 ```
 
-Default directories:
+Default values:
 
 ```shell script
 DB_PATH="../Resources/DB/db.json"
 SOUNDS_PATH="../Resources/Sounds"
+DEFAULT_INTERVAL=300
+DEFAULT_QUOTE_TIME=22:00
 ```
 
 ## 📝 Features & Commands
@@ -61,6 +65,14 @@ SOUNDS_PATH="../Resources/Sounds"
 * Set interval between RonnieBot playing Ronnie sounds (seconds)
 
 `!ronnie_interval <INTEGER>`
+
+* Set time when RonnieBot will send an inspirational quote to the Text Channel
+
+`!ronnie_quote_time <HH:MM>`
+
+* Post inspirational quote
+
+`!ronnie_quote`
 
 * Play randomly chosen Ronnie sound
 

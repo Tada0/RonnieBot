@@ -76,7 +76,7 @@ async def set_channel_interval(context):
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
             if voice_channel.id in list(map(lambda entry: entry['voice_channel'], db.table('channels').all())):
                 if len(message := context.message.content.split()) != 2 or not message[1].isnumeric():
-                    raise ValueError('Wrong command format, type "?ronnie" for help')
+                    raise ValueError('Wrong command format, type "!ronnie" for help')
                 db.table('channels').update(
                     {
                         'interval': int(message[1])
@@ -85,9 +85,30 @@ async def set_channel_interval(context):
                 )
                 await context.send(f'Ronnie Interval for Channel "{voice_channel}" set to {message[1]} seconds.')
             else:
-                await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
+                await context.send(f'Voice Channel "{voice_channel}" Has Not Been Added Yet - type "!ronnie" for help')
     except AttributeError:
         print('User not in any Voice Channel')
+    except ValueError as error:
+        await context.send(error)
+
+
+@client.command(name='ronnie_quote_time', pass_context=True)
+async def set_channel_quote_time(context):
+    try:
+        dm_channel = context.channel
+        with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
+            if dm_channel.id in list(map(lambda entry: entry['dm_channel'], db.table('channels').all())):
+                if len(message := context.message.content.split()) != 2 or not re.match(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$', message[1]):
+                    raise ValueError('Wrong command format, type "!ronnie" for help')
+                db.table('channels').update(
+                    {
+                        'quote_time': message[1]
+                    },
+                    tinydb.Query().dm_channel == dm_channel.id
+                )
+                await context.send(f'Ronnie Quote Time for Channel "{dm_channel}" set to {message[1]}.')
+            else:
+                await context.send(f'Text Channel "{dm_channel}" Has Not Been Added Yet - type "!ronnie" for help')
     except ValueError as error:
         await context.send(error)
 
@@ -164,7 +185,7 @@ async def send_quote(dm_channel_id):
     await client.get_channel(dm_channel_id).send(embed=discord.Embed.from_dict({
         "title": quotes.get_random_quote(),
         "type": "rich",
-        "color": 16777215,
+        "color": 12370112,
         "image": {"url": ImageCollector.get_random_ronnie_image_url()}
     }))
 
