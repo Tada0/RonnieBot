@@ -3,3 +3,4 @@ tinydb==4.3.0
 asyncio==3.4.3
 discord~=1.0.1
 python-dotenv~=0.15.0
+beautifulsoup4~=4.9.3

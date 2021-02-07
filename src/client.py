@@ -3,9 +3,13 @@ import os
 import time
 from random import choice, randint
 import bot_help
+from ImageCollector import ImageCollector
 import discord
 import settings
 import tinydb
+from datetime import datetime
+import re
+import quotes
 from discord.ext.commands import Bot
 
 client = Bot(command_prefix=("?", "#", "!"))
@@ -15,14 +19,23 @@ client = Bot(command_prefix=("?", "#", "!"))
 async def add_voice_channel(context):
     try:
         voice_channel = context.author.voice.channel
+        dm_channel = context.channel
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
-            if voice_channel.id not in list(map(lambda entry: entry['channel'], db.table('channels').all())):
+            if voice_channel.id not in list(map(lambda entry: entry['voice_channel'], db.table('channels').all())):
                 db.table('channels').insert(
-                    {'channel': voice_channel.id, 'interval': 300, 'timestamp': int(time.time())})
+                    {
+                        'voice_channel': voice_channel.id,
+                        'dm_channel': dm_channel.id,
+                        'interval': int(os.getenv('DEFAULT_INTERVAL')),
+                        'timestamp': int(time.time())
+                    }
+                )
                 await context.send(f'Voice Channel "{voice_channel}" Added')
+                await context.send(bot_help.help_text)
             else:
                 await context.send(f'Voice Channel "{voice_channel}" Already Added')
-    except AttributeError:
+    except AttributeError as error:
+        print(error)
         print('User not in any Voice Channel')
 
 
@@ -31,8 +44,8 @@ async def remove_voice_channel(context):
     try:
         voice_channel = context.author.voice.channel
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
-            if voice_channel.id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
-                db.table('channels').remove(tinydb.Query().channel == voice_channel.id)
+            if voice_channel.id in list(map(lambda entry: entry['voice_channel'], db.table('channels').all())):
+                db.table('channels').remove(tinydb.Query().voice_channel == voice_channel.id)
                 await context.send(f'Voice Channel "{voice_channel}" Removed')
             else:
                 await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
@@ -45,10 +58,15 @@ async def set_channel_interval(context):
     try:
         voice_channel = context.author.voice.channel
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
-            if voice_channel.id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
+            if voice_channel.id in list(map(lambda entry: entry['voice_channel'], db.table('channels').all())):
                 if len(message := context.message.content.split()) != 2 or not message[1].isnumeric():
                     raise ValueError('Wrong command format, type "?ronnie" for help')
-                db.table('channels').update({'interval': int(message[1])}, tinydb.Query().channel == voice_channel.id)
+                db.table('channels').update(
+                    {
+                        'interval': int(message[1])
+                    },
+                    tinydb.Query().voice_channel == voice_channel.id
+                )
                 await context.send(f'Ronnie Interval for Channel "{voice_channel}" set to {message[1]} seconds.')
             else:
                 await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
@@ -95,28 +113,62 @@ async def playback_queue():
     await client.wait_until_ready()
     while not client.is_closed():
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
-            for voice_channel_id in list(map(lambda entry: entry['channel'], db.table('channels').all())):
+            for voice_channel_id in list(map(lambda entry: entry['voice_channel'], db.table('channels').all())):
                 try:
                     if (voice_channel := client.get_channel(voice_channel_id)).voice_states:
-                        channel_data = db.table('channels').search(tinydb.Query().channel == voice_channel_id)[0]
+                        channel_data = db.table('channels').search(tinydb.Query().voice_channel == voice_channel_id)[0]
                         if not int(channel_data['timestamp']) + int(channel_data['interval']) > int(time.time()):
-                            db.table('channels').update({'timestamp': int(time.time())},
-                                                        tinydb.Query().channel == voice_channel_id)
+                            db.table('channels').update(
+                                {
+                                    'timestamp': int(time.time())
+                                },
+                                tinydb.Query().voice_channel == voice_channel_id
+                            )
                             await play(voice_channel)
                 except AttributeError:
-                    db.table('channels').remove(tinydb.Query().channel == voice_channel_id)
+                    print(2)
+                    db.table('channels').remove(tinydb.Query().voice_channel == voice_channel_id)
         await asyncio.sleep(5)
+
+
+async def quote_queue():
+    await client.wait_until_ready()
+    while not client.is_closed():
+        current_time = datetime.now().strftime("%H:%M")
+        with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
+            for dm_channel_id in list(map(lambda entry: entry['dm_channel'], db.table('channels').all())):
+                try:
+                    if current_time == os.getenv('QUOTE_TIME'):
+                        await send_quote(dm_channel_id)
+                except AttributeError:
+                    db.table('channels').remove(tinydb.Query().dm_channel == dm_channel_id)
+        await asyncio.sleep(1)
+
+
+@client.command(name='ronnie_quote', pass_context=True)
+async def quote(context):
+    await client.wait_until_ready()
+    await send_quote(context.channel.id)
+
+
+async def send_quote(dm_channel_id):
+    await client.get_channel(dm_channel_id).send(embed=discord.Embed.from_dict({
+        "title": quotes.get_random_quote(),
+        "type": "rich",
+        "color": 16777215,
+        "image": {"url": ImageCollector.get_random_ronnie_image_url()}
+    }))
 
 
 @client.event
 async def on_ready():
+    client.loop.create_task(quote_queue())
     client.loop.create_task(playback_queue())
     print("Logged in as " + client.user.name)
 
 
 async def play(voice_channel):
     all_sounds = [file for file in os.listdir(os.getenv('SOUNDS_PATH'))]
-    voice_channel = voice_channel
     try:
         voice_channel_connection = await voice_channel.connect()
         voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{choice(all_sounds)}'))
