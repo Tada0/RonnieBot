@@ -129,9 +129,7 @@ async def sound(context, loops=1):
             while voice_channel_connection.is_playing():
                 time.sleep(.1)
     else:
-        song = choice({
-            k: [f for f in os.listdir(os.getenv('SOUNDS_PATH')) if f.startswith(k)] for k in context.command.aliases
-        }[context.message.content[1:]])
+        song = choice([f for f in os.listdir(os.getenv('SOUNDS_PATH')) if f.startswith(context.message.content[1:])])
         voice_channel_connection.play(discord.FFmpegPCMAudio(f'{os.getenv("SOUNDS_PATH")}/{song}'))
         while voice_channel_connection.is_playing():
             time.sleep(.1)
