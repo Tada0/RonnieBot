@@ -15,6 +15,21 @@ from discord.ext.commands import Bot
 client = Bot(command_prefix=("?", "#", "!"))
 
 
+@client.event
+async def on_ready():
+    client.loop.create_task(quote_queue())
+    client.loop.create_task(playback_queue())
+    print("Logged in as " + client.user.name)
+
+
+@client.event
+async def on_guild_join(guild):
+    for channel in guild.text_channels:
+        if channel.permissions_for(guild.me).send_messages:
+            await channel.send(bot_help.help_text)
+        break
+
+
 @client.command(name='ronnie_add', pass_context=True)
 async def add_voice_channel(context):
     try:
@@ -27,6 +42,7 @@ async def add_voice_channel(context):
                         'voice_channel': voice_channel.id,
                         'dm_channel': dm_channel.id,
                         'interval': int(os.getenv('DEFAULT_INTERVAL')),
+                        'quote_time': os.getenv('DEFAULT_QUOTE_TIME'),
                         'timestamp': int(time.time())
                     }
                 )
@@ -96,17 +112,15 @@ async def sound(context, loops=1):
     await voice_channel_connection.disconnect()
 
 
-@client.event
-async def on_guild_join(guild):
-    for channel in guild.text_channels:
-        if channel.permissions_for(guild.me).send_messages:
-            await channel.send(bot_help.help_text)
-        break
-
-
 @client.command(name='ronnie_vibe_check', pass_context=True)
 async def vibe_check(context):
     await sound(context, loops=randint(5, 10))
+
+
+@client.command(name='ronnie_quote', pass_context=True)
+async def quote(context):
+    await client.wait_until_ready()
+    await send_quote(context.channel.id)
 
 
 async def playback_queue():
@@ -138,17 +152,12 @@ async def quote_queue():
         with tinydb.TinyDB(os.getenv('DB_PATH')) as db:
             for dm_channel_id in list(map(lambda entry: entry['dm_channel'], db.table('channels').all())):
                 try:
-                    if current_time == os.getenv('QUOTE_TIME'):
+                    channel_data = db.table('channels').search(tinydb.Query().dm_channel == dm_channel_id)[0]
+                    if current_time == channel_data['quote_time']:
                         await send_quote(dm_channel_id)
                 except AttributeError:
                     db.table('channels').remove(tinydb.Query().dm_channel == dm_channel_id)
-        await asyncio.sleep(1)
-
-
-@client.command(name='ronnie_quote', pass_context=True)
-async def quote(context):
-    await client.wait_until_ready()
-    await send_quote(context.channel.id)
+        await asyncio.sleep(60)
 
 
 async def send_quote(dm_channel_id):
@@ -158,13 +167,6 @@ async def send_quote(dm_channel_id):
         "color": 16777215,
         "image": {"url": ImageCollector.get_random_ronnie_image_url()}
     }))
-
-
-@client.event
-async def on_ready():
-    client.loop.create_task(quote_queue())
-    client.loop.create_task(playback_queue())
-    print("Logged in as " + client.user.name)
 
 
 async def play(voice_channel):

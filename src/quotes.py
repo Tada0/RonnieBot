@@ -35,7 +35,7 @@ quotes = [
     "I've been training so long, its second nature to push myself to the limit.",
     "If you take a hammer and hit something over and over again, it's gonna be destroyed.",
     "I don't wanna destroy my body cause I want my body to last me as long as it possible can. If you train hard and \
-    push it everyday, your body is going to wear out. So I give my body time to recover.",
+    push it everyday, your body is going to wear out.",
     "Bodybuilding is a hobby. At least for me it is. I've trained since i was 12 or 13 years old. It's a hobby I just\
     have so much fun with it. I get so much enjoyment from it.",
     "To have your job as your hobby - life don't get better than that.",
