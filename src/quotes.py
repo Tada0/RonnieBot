@@ -46,4 +46,4 @@ quotes = [
 
 
 def get_random_quote():
-    return re.sub(' +', ' ', choice(quotes)) + "\n" + "\t" * 49 + "~ Ronnie Coleman"
+    return re.sub(' +', ' ', choice(quotes)) + "\n"

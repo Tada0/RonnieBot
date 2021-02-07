@@ -189,7 +189,8 @@ async def send_quote(dm_channel_id):
         "title": quotes.get_random_quote(),
         "type": "rich",
         "color": 12370112,
-        "image": {"url": ImageCollector.get_random_ronnie_image_url()}
+        "image": {"url": ImageCollector.get_random_ronnie_image_url()},
+        "footer": {"text": "~ Ronnie Coleman"}
     }))
 
 
