@@ -53,6 +53,7 @@ async def add_voice_channel(context):
     except AttributeError as error:
         print(error)
         print('User not in any Voice Channel')
+    await context.message.delete()
 
 
 @client.command(name='ronnie_remove', pass_context=True)
@@ -67,6 +68,7 @@ async def remove_voice_channel(context):
                 await context.send(f'Voice Channel "{voice_channel}" Has Not Been Found')
     except AttributeError:
         print('User not in any Voice Channel')
+    await context.message.delete()
 
 
 @client.command(name='ronnie_interval', pass_context=True)
@@ -90,6 +92,7 @@ async def set_channel_interval(context):
         print('User not in any Voice Channel')
     except ValueError as error:
         await context.send(error)
+    await context.message.delete()
 
 
 @client.command(name='ronnie_quote_time', pass_context=True)
@@ -111,11 +114,13 @@ async def set_channel_quote_time(context):
                 await context.send(f'Text Channel "{dm_channel}" Has Not Been Added Yet - type "!ronnie" for help')
     except ValueError as error:
         await context.send(error)
+    await context.message.delete()
 
 
 @client.command(name='ronnie', pass_context=True)
 async def ronnie_help(context):
     await context.send(bot_help.help_text)
+    await context.message.delete()
 
 
 @client.command(name='ronnie_sound', aliases=['lightweight', 'yeahbuddy', 'yeahbaby', 'chant'], pass_context=True)
@@ -134,17 +139,20 @@ async def sound(context, loops=1):
         while voice_channel_connection.is_playing():
             time.sleep(.1)
     await voice_channel_connection.disconnect()
+    await context.message.delete()
 
 
 @client.command(name='ronnie_vibe_check', pass_context=True)
 async def vibe_check(context):
     await sound(context, loops=randint(5, 10))
+    await context.message.delete()
 
 
 @client.command(name='ronnie_quote', pass_context=True)
 async def quote(context):
     await client.wait_until_ready()
     await send_quote(context.channel.id)
+    await context.message.delete()
 
 
 async def playback_queue():
@@ -164,7 +172,6 @@ async def playback_queue():
                             )
                             await play(voice_channel)
                 except AttributeError:
-                    print(2)
                     db.table('channels').remove(tinydb.Query().voice_channel == voice_channel_id)
         await asyncio.sleep(5)
 
